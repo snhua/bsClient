@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="top.ilikecode.thelastone">
+          package="com.kaixin.mykey">
     <!-- 网络，读写，相机，重力感应权限 -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
@@ -16,39 +16,42 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/dice"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/dice"
+        android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".activity.QrcodeActivity">
-        </activity>
-        <activity android:name=".activity.RoomActivity">
-        </activity>
 
-        <service
-            android:name=".service.SocketListener"
-            android:enabled="true"
-            android:exported="true">
-        </service>
-
-        <activity android:name=".activity.AboutActivity">
-        </activity>
-        <activity android:name=".activity.FirstActivity">
+        <activity android:name="com.kaixin.mykey.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".game.GameYaohuangshang">
+
+        <activity
+            android:name=".zbar.CaptureActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/app_name"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
-        <activity android:name=".activity.SettingsActivity">
+        <activity
+            android:name=".FullscreenActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="com.kxfx.mykey.auth" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
-        <activity android:name=".activity.MainActivity">
-        </activity>
-        <activity android:name=".zbar.CaptureActivity">
-        </activity>
+
     </application>
 
 </manifest>
