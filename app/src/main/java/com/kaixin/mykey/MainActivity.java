@@ -73,7 +73,7 @@ public class MainActivity extends Activity implements ReWebChomeClient.OpenFileC
 
         fixDirPath();
 //        webView.loadUrl("http://192.168.101.71:9099/webqr/qr2.html");
-        webView.loadUrl("https://mykey.mtx6.com/mykey/#/");
+        webView.loadUrl("http://192.168.101.242:8085/mykey/#/");
 //        webView.loadUrl("http://192.168.101.71:8085/mykey/#/");
 
 
