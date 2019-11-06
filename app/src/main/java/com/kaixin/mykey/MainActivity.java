@@ -30,7 +30,7 @@ import wendu.webviewjavascriptbridge.WVJBWebView;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class MainActivity extends Activity implements ReWebChomeClient.OpenFileChooserCallBack {
+public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenFileChooserCallBack {
     private static final int REQUEST_CODE_SCAN = 0x0000;// 扫描二维码
     private static final String TAG = "MyActivity";
     private static final int REQUEST_CODE_PICK_IMAGE = 2;
@@ -53,6 +53,7 @@ public class MainActivity extends Activity implements ReWebChomeClient.OpenFileC
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setStatusBarColor(this,R.color.status_col);
         setContentView(R.layout.activity_main);
 
 

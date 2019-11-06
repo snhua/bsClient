@@ -15,7 +15,7 @@ import wendu.webviewjavascriptbridge.WVJBWebView;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class FullscreenActivity extends Activity {
+public class FullscreenActivity extends BaseActivity {
     private WebViewClient client = new WebViewClient() {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -28,6 +28,9 @@ public class FullscreenActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+        setStatusBarColor(this,R.color.status_col);
 
         setContentView(R.layout.activity_fullscreen);
 
