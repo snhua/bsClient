@@ -30,8 +30,6 @@ public class FullscreenActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
 
 
-        setStatusBarColor(this,R.color.status_col);
-
         setContentView(R.layout.activity_fullscreen);
 
 

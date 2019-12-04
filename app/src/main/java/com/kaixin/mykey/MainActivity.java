@@ -3,13 +3,19 @@ package com.kaixin.mykey;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
+import android.support.v4.os.EnvironmentCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
@@ -23,6 +29,10 @@ import android.widget.Toast;
 import com.kaixin.mykey.zbar.CaptureActivity;
 
 import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import wendu.webviewjavascriptbridge.WVJBWebView;
 
@@ -53,7 +63,9 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setStatusBarColor(this,R.color.status_col);
+        Intent intent=new Intent(this,SplashActivity.class);
+        startActivity(intent);
+
         setContentView(R.layout.activity_main);
 
 
@@ -74,10 +86,11 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
 
         fixDirPath();
 //        webView.loadUrl("http://192.168.101.71:9099/webqr/qr2.html");
-        webView.loadUrl("https://mykey.mtx6.com/mykey/#/");
+//        webView.loadUrl("https://mykey.mtx6.com/mykey/#/");
+   webView.loadUrl("https://k.mykeyets.com/mykey/#/");
 
 //        webView.loadUrl("http://192.168.101.242:8085/mykey/#/");
-//        webView.loadUrl("http://192.168.101.71:8085/mykey/#/");
+//        webView.loadUrl("http://192.168.101.71/key/#/");
 
 
     }
@@ -86,7 +99,7 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
 
         settings.setAppCacheEnabled(true);
         //设置 缓存模式
-        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         // 开启 DOM storage API 功能
         settings.setDomStorageEnabled(true);
 //        = webView.getSettings();
@@ -146,8 +159,10 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
                 }
                 break;
             case 0:
-                mSourceIntent = ImageUtil.takeBigPicture();
-                startActivityForResult(mSourceIntent, REQUEST_CODE_IMAGE_CAPTURE);
+//                mSourceIntent = ImageUtil.takeBigPicture();
+//                startActivityForResult(mSourceIntent, REQUEST_CODE_IMAGE_CAPTURE);
+
+                openCamera(REQUEST_CODE_IMAGE_CAPTURE);
                 break;
             case 2:
                 mSourceIntent = ImageUtil.choosePicture();
@@ -168,28 +183,52 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
                         if (mUploadMsg == null && mUploadMsg5Plus == null) {
                             return;
                         }
-                        String sourcePath = ImageUtil.retrievePath(this, mSourceIntent, data);
-                        if (TextUtils.isEmpty(sourcePath) || !new File(sourcePath).exists()) {
-                            Log.w(TAG, "sourcePath empty or not exists.");
 
-
+                        if (isAndroidQ) {
+                            // Android 10 使用图片uri加载
                             if (mUploadMsg != null) {
-                                mUploadMsg.onReceiveValue(null);
+                                mUploadMsg.onReceiveValue(mCameraUri);
                                 mUploadMsg = null;
                             } else {
-                                mUploadMsg5Plus.onReceiveValue(null);
+                                mUploadMsg5Plus.onReceiveValue(new Uri[]{mCameraUri});
                                 mUploadMsg5Plus = null;
                             }
-                            break;
-                        }
-                        Uri uri = Uri.fromFile(new File(sourcePath));
-                        if (mUploadMsg != null) {
-                            mUploadMsg.onReceiveValue(uri);
-                            mUploadMsg = null;
                         } else {
-                            mUploadMsg5Plus.onReceiveValue(new Uri[]{uri});
-                            mUploadMsg5Plus = null;
+                            // 使用图片路径加载
+
+
+                            Uri uri = Uri.fromFile(new File(mCameraImagePath));
+                            if (mUploadMsg != null) {
+                                mUploadMsg.onReceiveValue(uri);
+                                mUploadMsg = null;
+                            } else {
+                                mUploadMsg5Plus.onReceiveValue(new Uri[]{uri});
+                                mUploadMsg5Plus = null;
+                            }
                         }
+
+//                        String sourcePath = ImageUtil.retrievePath(this, mSourceIntent, data);
+//                        if (TextUtils.isEmpty(sourcePath) || !new File(sourcePath).exists()) {
+//                            Log.w(TAG, "sourcePath empty or not exists.");
+//
+//
+//                            if (mUploadMsg != null) {
+//                                mUploadMsg.onReceiveValue(null);
+//                                mUploadMsg = null;
+//                            } else {
+//                                mUploadMsg5Plus.onReceiveValue(null);
+//                                mUploadMsg5Plus = null;
+//                            }
+//                            break;
+//                        }
+//                        Uri uri = Uri.fromFile(new File(sourcePath));
+//                        if (mUploadMsg != null) {
+//                            mUploadMsg.onReceiveValue(uri);
+//                            mUploadMsg = null;
+//                        } else {
+//                            mUploadMsg5Plus.onReceiveValue(new Uri[]{uri});
+//                            mUploadMsg5Plus = null;
+//                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -252,8 +291,9 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
                     if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, 0);
                     } else {
-                        mSourceIntent = ImageUtil.takeBigPicture();
-                        startActivityForResult(mSourceIntent, REQUEST_CODE_IMAGE_CAPTURE);
+//                        mSourceIntent = ImageUtil.takeBigPicture();
+//                        startActivityForResult(mSourceIntent, REQUEST_CODE_IMAGE_CAPTURE);
+                        openCamera(REQUEST_CODE_IMAGE_CAPTURE);
                     }
                 }
             }
@@ -286,4 +326,84 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
             }
         }
     }
+
+
+    //用于保存拍照图片的uri
+    private Uri mCameraUri;
+
+    // 用于保存图片的文件路径，Android 10以下使用图片路径访问图片
+    private String mCameraImagePath;
+
+    // 是否是Android 10以上手机
+    private boolean isAndroidQ = Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q;
+
+    /**
+     * 调起相机拍照
+     */
+    private void openCamera(int code) {
+        Intent captureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // 判断是否有相机
+        if (captureIntent.resolveActivity(getPackageManager()) != null) {
+            File photoFile = null;
+            Uri photoUri = null;
+
+            if (isAndroidQ) {
+                // 适配android 10
+                photoUri = createImageUri();
+            } else {
+                try {
+                    photoFile = createImageFile();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                if (photoFile != null) {
+                    mCameraImagePath = photoFile.getAbsolutePath();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        //适配Android 7.0文件权限，通过FileProvider创建一个content类型的Uri
+                        photoUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", photoFile);
+                    } else {
+                        photoUri = Uri.fromFile(photoFile);
+                    }
+                }
+            }
+
+            mCameraUri = photoUri;
+            if (photoUri != null) {
+                captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+                captureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                startActivityForResult(captureIntent,code );
+            }
+        }
+    }
+
+    /**
+     * 创建图片地址uri,用于保存拍照后的照片 Android 10以后使用这种方法
+     */
+    private Uri createImageUri() {
+        String status = Environment.getExternalStorageState();
+        // 判断是否有SD卡,优先使用SD卡存储,当没有SD卡时使用手机存储
+        if (status.equals(Environment.MEDIA_MOUNTED)) {
+            return getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, new ContentValues());
+        } else {
+            return getContentResolver().insert(MediaStore.Images.Media.INTERNAL_CONTENT_URI, new ContentValues());
+        }
+    }
+
+    /**
+     * 创建保存图片的文件
+     */
+    private File createImageFile() throws IOException {
+        String imageName = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        if (!storageDir.exists()) {
+            storageDir.mkdir();
+        }
+        File tempFile = new File(storageDir, imageName);
+        if (!Environment.MEDIA_MOUNTED.equals(EnvironmentCompat.getStorageState(tempFile))) {
+            return null;
+        }
+        return tempFile;
+    }
+
 }

@@ -5,5 +5,6 @@
     <color name="colorAccent">#D81B60</color>
 
     <color name="black_overlay">#66000000</color>
-    <color name="status_col">#3273ff</color>
+<!--    <color name="status_col">#3273ff</color>-->
+    <color name="status_col">#191937</color>
 </resources>
