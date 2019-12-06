@@ -63,7 +63,7 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Intent intent=new Intent(this,SplashActivity.class);
+        Intent intent = new Intent(this, SplashActivity.class);
         startActivity(intent);
 
         setContentView(R.layout.activity_main);
@@ -87,10 +87,10 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
         fixDirPath();
 //        webView.loadUrl("http://192.168.101.71:9099/webqr/qr2.html");
 //        webView.loadUrl("https://mykey.mtx6.com/mykey/#/");
-   webView.loadUrl("https://k.mykeyets.com/mykey/#/");
+//   webView.loadUrl("https://k.mykeyets.com/mykey/#/");
 
 //        webView.loadUrl("http://192.168.101.242:8085/mykey/#/");
-//        webView.loadUrl("http://192.168.101.71/key/#/");
+        webView.loadUrl("http://192.168.101.71/key/#/");
 
 
     }
@@ -148,7 +148,7 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode,  String[] permissions,  int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         switch (requestCode) {
 
             case 1:
@@ -177,63 +177,69 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
-            case REQUEST_CODE_IMAGE_CAPTURE:
             case REQUEST_CODE_PICK_IMAGE: {
-                    try {
-                        if (mUploadMsg == null && mUploadMsg5Plus == null) {
-                            return;
-                        }
-
-                        if (isAndroidQ) {
-                            // Android 10 使用图片uri加载
-                            if (mUploadMsg != null) {
-                                mUploadMsg.onReceiveValue(mCameraUri);
-                                mUploadMsg = null;
-                            } else {
-                                mUploadMsg5Plus.onReceiveValue(new Uri[]{mCameraUri});
-                                mUploadMsg5Plus = null;
-                            }
-                        } else {
-                            // 使用图片路径加载
+                String sourcePath = ImageUtil.retrievePath(this, mSourceIntent, data);
+                Log.e("sourcePath",sourcePath);
+                if (TextUtils.isEmpty(sourcePath) || !new File(sourcePath).exists()) {
+                    Log.w(TAG, "sourcePath empty or not exists.");
 
 
-                            Uri uri = Uri.fromFile(new File(mCameraImagePath));
-                            if (mUploadMsg != null) {
-                                mUploadMsg.onReceiveValue(uri);
-                                mUploadMsg = null;
-                            } else {
-                                mUploadMsg5Plus.onReceiveValue(new Uri[]{uri});
-                                mUploadMsg5Plus = null;
-                            }
-                        }
-
-//                        String sourcePath = ImageUtil.retrievePath(this, mSourceIntent, data);
-//                        if (TextUtils.isEmpty(sourcePath) || !new File(sourcePath).exists()) {
-//                            Log.w(TAG, "sourcePath empty or not exists.");
-//
-//
-//                            if (mUploadMsg != null) {
-//                                mUploadMsg.onReceiveValue(null);
-//                                mUploadMsg = null;
-//                            } else {
-//                                mUploadMsg5Plus.onReceiveValue(null);
-//                                mUploadMsg5Plus = null;
-//                            }
-//                            break;
-//                        }
-//                        Uri uri = Uri.fromFile(new File(sourcePath));
-//                        if (mUploadMsg != null) {
-//                            mUploadMsg.onReceiveValue(uri);
-//                            mUploadMsg = null;
-//                        } else {
-//                            mUploadMsg5Plus.onReceiveValue(new Uri[]{uri});
-//                            mUploadMsg5Plus = null;
-//                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    if (mUploadMsg != null) {
+                        mUploadMsg.onReceiveValue(null);
+                        mUploadMsg = null;
+                    } else {
+                        mUploadMsg5Plus.onReceiveValue(null);
+                        mUploadMsg5Plus = null;
                     }
+                    break;
                 }
-                break;
+                Uri uri = Uri.fromFile(new File(sourcePath));
+                if (mUploadMsg != null) {
+                    Log.e("mUploadMsg",uri.getPath());
+                    mUploadMsg.onReceiveValue(uri);
+                    mUploadMsg = null;
+                } else {
+
+                    Log.e("mUploadMsg5Plus",uri.getPath());
+                    mUploadMsg5Plus.onReceiveValue(new Uri[]{uri});
+                    mUploadMsg5Plus = null;
+                }
+            }
+            break;
+            case REQUEST_CODE_IMAGE_CAPTURE: {
+                try {
+                    if (mUploadMsg == null && mUploadMsg5Plus == null) {
+                        return;
+                    }
+
+                    if (isAndroidQ) {
+                        // Android 10 使用图片uri加载
+                        if (mUploadMsg != null) {
+                            mUploadMsg.onReceiveValue(mCameraUri);
+                            mUploadMsg = null;
+                        } else {
+                            mUploadMsg5Plus.onReceiveValue(new Uri[]{mCameraUri});
+                            mUploadMsg5Plus = null;
+                        }
+                    } else {
+                        // 使用图片路径加载
+
+
+                        Uri uri = Uri.fromFile(new File(mCameraImagePath));
+                        if (mUploadMsg != null) {
+                            mUploadMsg.onReceiveValue(uri);
+                            mUploadMsg = null;
+                        } else {
+                            mUploadMsg5Plus.onReceiveValue(new Uri[]{uri});
+                            mUploadMsg5Plus = null;
+                        }
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            break;
             case REQUEST_CODE_SCAN:// 二维码
                 // 扫描二维码回传
                 if (resultCode == RESULT_OK) {
@@ -372,7 +378,7 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
             if (photoUri != null) {
                 captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
                 captureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                startActivityForResult(captureIntent,code );
+                startActivityForResult(captureIntent, code);
             }
         }
     }
