@@ -90,7 +90,8 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
 //   webView.loadUrl("https://k.mykeyets.com/mykey/#/");
 
 //        webView.loadUrl("http://192.168.101.242:8085/mykey/#/");
-        webView.loadUrl("http://192.168.101.71/key/#/");
+//       webView.loadUrl("http://192.168.101.71/key/#/");
+        webView.loadUrl("http://192.168.101.71/mykey/#/");
 
 
     }
@@ -99,7 +100,7 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
 
         settings.setAppCacheEnabled(true);
         //设置 缓存模式
-        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         // 开启 DOM storage API 功能
         settings.setDomStorageEnabled(true);
 //        = webView.getSettings();
