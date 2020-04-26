@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">mykey</string>
+    <string name="app_name">麦凯</string>
 
     <!--扫码-->
     <string name="qr_name">二维码</string>

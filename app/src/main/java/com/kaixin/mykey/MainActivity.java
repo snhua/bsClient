@@ -63,8 +63,8 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Intent intent = new Intent(this, SplashActivity.class);
-        startActivity(intent);
+//        Intent intent = new Intent(this, SplashActivity.class);
+//        startActivity(intent);
 
         setContentView(R.layout.activity_main);
 
@@ -86,12 +86,12 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
 
         fixDirPath();
 //        webView.loadUrl("http://192.168.101.71:9099/webqr/qr2.html");
-//        webView.loadUrl("https://mykey.mtx6.com/mykey/#/");
+        webView.loadUrl("https://mykey.mtx6.com/mykey/#/");
 //   webView.loadUrl("https://k.mykeyets.com/mykey/#/");
 
-//        webView.loadUrl("http://192.168.101.242:8085/mykey/#/");
+//        webView.loadUrl("http://192.168.101.242:8085/key/#/");
 //       webView.loadUrl("http://192.168.101.71/key/#/");
-        webView.loadUrl("http://192.168.101.71/mykey/#/");
+//        webView.loadUrl("http://192.168.101.71/mykey/#/");
 
 
     }
@@ -100,7 +100,8 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
 
         settings.setAppCacheEnabled(true);
         //设置 缓存模式
-        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+//        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         // 开启 DOM storage API 功能
         settings.setDomStorageEnabled(true);
 //        = webView.getSettings();
