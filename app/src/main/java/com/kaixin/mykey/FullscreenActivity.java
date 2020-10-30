@@ -54,7 +54,7 @@ public class FullscreenActivity extends BaseActivity {
         Intent intent = getIntent();
         String redirectUrl = intent.getStringExtra("redirect_uri");
         String clientId = intent.getStringExtra("client_id");
-        String url = String.format("https://mykey.mtx6.com/mykey/#/authorization?redirect_uri=%s&client_id=%s",
+        String url = String.format("https://mykey.free-coins.cn/mykey/#/authorization?redirect_uri=%s&client_id=%s",
                 redirectUrl, clientId);
         Log.e("err", url);
         webView.loadUrl(url);

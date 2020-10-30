@@ -86,8 +86,8 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
 
         fixDirPath();
 //        webView.loadUrl("http://192.168.101.71:9099/webqr/qr2.html");
-        webView.loadUrl("https://mykey.mtx6.com/mykey/#/");
-//   webView.loadUrl("https://k.mykeyets.com/mykey/#/");
+//        webView.loadUrl("https://mykey.free-coins.cn/mykey/#/");
+   webView.loadUrl("https://k.mykeyets.com/mykey/#/");
 
 //        webView.loadUrl("http://192.168.101.242:8085/key/#/");
 //       webView.loadUrl("http://192.168.101.71/key/#/");
