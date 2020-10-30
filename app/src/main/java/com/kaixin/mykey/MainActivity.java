@@ -4,20 +4,29 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.os.EnvironmentCompat;
 import android.text.TextUtils;
 import android.util.Log;
+import android.webkit.DownloadListener;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
@@ -28,11 +37,14 @@ import android.widget.Toast;
 
 import com.kaixin.mykey.zbar.CaptureActivity;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 
 import wendu.webviewjavascriptbridge.WVJBWebView;
 
@@ -85,15 +97,30 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
         });
 
         fixDirPath();
+        hasInternetConnected();
 //        webView.loadUrl("http://192.168.101.71:9099/webqr/qr2.html");
-        webView.loadUrl("https://mykey.mtx6.com/mykey/#/");
-//   webView.loadUrl("https://k.mykeyets.com/mykey/#/");
-
+//        webView.loadUrl("https://mykey.mtx6.com/mykey/#/");
+          webView.loadUrl("https://k.mykeyets.com/mykey/#/");
+//          webView.loadUrl("http://192.168.1.9:8085/key/#/");
 //        webView.loadUrl("http://192.168.101.242:8085/key/#/");
+//        webView.loadUrl("http://192.168.101.100:8085/mykey/#/");
 //       webView.loadUrl("http://192.168.101.71/key/#/");
-//        webView.loadUrl("http://192.168.101.71/mykey/#/");
+//        webView.loadUrl("http://192.168.101.100/mykey/#/");
+        webView.setDownloadListener(new DownloadListener() {
+            @Override
+            public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimeType, long contentLength) {
+                // TODO: 2017-5-6 处理下载事件
+                downloadByBrowser(url);
+            }
+        });
 
+    }
 
+    private void downloadByBrowser(String url) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.addCategory(Intent.CATEGORY_BROWSABLE);
+        intent.setData(Uri.parse(url));
+        startActivity(intent);
     }
 
     void setting(WebSettings settings) {
@@ -157,7 +184,7 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     goScan();
                 } else {
-                    Toast.makeText(this, "你拒绝了权限申请，可能无法打开相机扫码哟！", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "您拒绝了权限申请，可能无法打开相机扫码哟！", Toast.LENGTH_SHORT).show();
                 }
                 break;
             case 0:
@@ -167,8 +194,13 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
                 openCamera(REQUEST_CODE_IMAGE_CAPTURE);
                 break;
             case 2:
-                mSourceIntent = ImageUtil.choosePicture();
-                startActivityForResult(mSourceIntent, REQUEST_CODE_PICK_IMAGE);
+                Log.d(TAG, "onRequestPermissionsResult: 2");
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    mSourceIntent = ImageUtil.choosePicture();
+                    startActivityForResult(mSourceIntent, REQUEST_CODE_PICK_IMAGE);
+                }else{
+                    Toast.makeText(this, "您拒绝了读取文件的权限申请，可能无法获取图片！", Toast.LENGTH_SHORT).show();
+                }
                 break;
             default:
         }
@@ -180,6 +212,7 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
             case REQUEST_CODE_PICK_IMAGE: {
+                Log.d(TAG, "onActivityResult: "+data);
                 String sourcePath = ImageUtil.retrievePath(this, mSourceIntent, data);
                 Log.e("sourcePath",sourcePath);
                 if (TextUtils.isEmpty(sourcePath) || !new File(sourcePath).exists()) {
@@ -195,9 +228,56 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
                     }
                     break;
                 }
-                Uri uri = Uri.fromFile(new File(sourcePath));
+
+                File photoFile = null;
+                Uri photoUri = null;
+
+                if (isAndroidQ) {
+                    // 适配android 10
+                    photoUri = createImageUri();
+                } else {
+                    try {
+                        photoFile = createImageFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    if (photoFile != null) {
+                        mCameraImagePath = photoFile.getAbsolutePath();
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                            //适配Android 7.0文件权限，通过FileProvider创建一个content类型的Uri
+                            photoUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", photoFile);
+                        } else {
+                            photoUri = Uri.fromFile(photoFile);
+                        }
+                    }
+                }
+                Bitmap bitmap = getBitmapWithRightRotation(sourcePath);
+
+                File file= null;//new File(mCameraImagePath);//将要保存图片的路径
+                if(isAndroidQ) {
+                    try {
+                        file = new File(createImageFile().getAbsolutePath());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }else{
+                    file = new File(mCameraImagePath);
+                }
+                try {
+                    BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos);
+                    bos.flush();
+                    bos.close();
+                }catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+
+
+                Uri uri = Uri.fromFile(file);//new File(sourcePath)
                 if (mUploadMsg != null) {
-                    Log.e("mUploadMsg",uri.getPath());
+                    Log.e("mUploadMsg", Objects.requireNonNull(uri.getPath()));
                     mUploadMsg.onReceiveValue(uri);
                     mUploadMsg = null;
                 } else {
@@ -226,8 +306,18 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
                     } else {
                         // 使用图片路径加载
 
-
-                        Uri uri = Uri.fromFile(new File(mCameraImagePath));
+                        Bitmap bitmap = getBitmapWithRightRotation(mCameraImagePath);
+                        File file=new File(mCameraImagePath);//将要保存图片的路径
+                        try {
+                            BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos);
+                            bos.flush();
+                            bos.close();
+                        }catch (IOException e)
+                        {
+                            e.printStackTrace();
+                        }
+                        Uri uri = Uri.fromFile(file);//(new File(mCameraImagePath));
                         if (mUploadMsg != null) {
                             mUploadMsg.onReceiveValue(uri);
                             mUploadMsg = null;
@@ -289,8 +379,10 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
                 if (which == 0) {
                     //动态权限申请
                     if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                        Log.d(TAG, "onClick: permissions");
                         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 2);
                     } else {
+                        Log.d(TAG, "onClick: picture");
                         mSourceIntent = ImageUtil.choosePicture();
                         startActivityForResult(mSourceIntent, REQUEST_CODE_PICK_IMAGE);
                     }
@@ -402,7 +494,7 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
      * 创建保存图片的文件
      */
     private File createImageFile() throws IOException {
-        String imageName = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+        String imageName = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date())+".jpg";
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         if (!storageDir.exists()) {
             storageDir.mkdir();
@@ -412,6 +504,92 @@ public class MainActivity extends BaseActivity implements ReWebChomeClient.OpenF
             return null;
         }
         return tempFile;
+    }
+
+    /**
+     * 获取正确的旋转角度的图片——一般由系统相机拍照才会导致此情况
+     *
+     * @param path 图片绝对路径
+     * @return 图片的旋转角度
+     */
+    public static Bitmap getBitmapWithRightRotation(String path) {
+        int degree = 0;
+        try {
+            // 从指定路径下读取图片，并获取其EXIF信息
+            ExifInterface exifInterface = new ExifInterface(path);
+            // 获取图片的旋转信息
+            int orientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL);
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    degree = 90;
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    degree = 180;
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    degree = 270;
+                    break;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+//        Log.e("CameraUtils", "degree: " + degree);
+        Bitmap bm = BitmapFactory.decodeFile(path);
+        //照片没有被旋转角度，直接返回原图片
+        if (degree == 0) {
+            return bm;
+        }
+        Bitmap returnBm = null;
+
+        // 根据旋转角度，生成旋转矩阵
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degree);
+        try {
+            // 将原始图片按照旋转矩阵进行旋转，并得到新的图片
+            returnBm = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), matrix, true);
+        } catch (OutOfMemoryError e) {
+        }
+        if (returnBm == null) {
+            returnBm = bm;
+        }
+        if (bm != returnBm) {
+            bm.recycle();
+        }
+        return returnBm;
+    }
+
+    public boolean hasInternetConnected() {
+        ConnectivityManager manager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (manager != null){
+            NetworkInfo info = manager.getActiveNetworkInfo();
+            if(info !=null && info.isConnectedOrConnecting() ){
+                return true;
+            }
+        }
+
+        openWirelessSet();
+        return false;
+    }
+    public void openWirelessSet() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("提示")
+                .setMessage("请检查您的网络连接")
+                .setPositiveButton("设置", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(
+                                Settings.ACTION_WIFI_SETTINGS);
+                        startActivity(intent);
+                    }
+                })
+                .setNegativeButton("关闭", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        builder.create().show();
     }
 
 }

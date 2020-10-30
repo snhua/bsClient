@@ -22,6 +22,8 @@ public class ImageUtil {
     public static Intent choosePicture() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("image/*");
+        /*intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);*/
         return Intent.createChooser(intent, null);
     }
 
